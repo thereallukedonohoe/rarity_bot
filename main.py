@@ -5,6 +5,7 @@ import json
 import csv
 from requests_oauthlib import OAuth1
 
+# ✅ OAuth credentials from GitHub Secrets
 auth = OAuth1(
     os.environ['BL_CONSUMER_KEY'],
     os.environ['BL_CONSUMER_SECRET'],
@@ -13,7 +14,10 @@ auth = OAuth1(
 )
 
 def get_inventory():
+    print("🔐 Calling BrickLink API for inventory...")
     r = requests.get("https://api.bricklink.com/api/store/v1/inventories", auth=auth)
+    print(f"🔁 Response Code: {r.status_code}")
+    print(f"🧾 Response: {r.text}")
     return r.json().get("data", [])
 
 def get_seller_count(item_type, item_no):
@@ -29,6 +33,11 @@ def update_featured(lot_id, value=True):
 
 print("🔄 Fetching inventory...")
 inventory = get_inventory()
+
+# Bail out if inventory didn't load
+if not inventory:
+    print("❌ Inventory not loaded. Check credentials or API error above.")
+    exit(1)
 
 rare_list = []
 for item in inventory:
@@ -63,6 +72,7 @@ for part in top_20:
 
 print(f"✅ {updated} items featured.")
 
+# Save output
 with open("top_20_rarest.json", "w") as f:
     json.dump(top_20, f, indent=2)
 

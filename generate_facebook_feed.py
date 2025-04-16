@@ -35,9 +35,9 @@ inventory = get_inventory()
 
 with open("meta_product_feed.csv", "w", newline='') as f:
     writer = csv.DictWriter(f, fieldnames=[
-        "id", "name", "no", "availability", "condition",
+        "id", "no", "name", "availability", "condition",
         "price", "link", "image_link", "brand", "google_product_category",
-        "fb_product_category", "color"
+        "fb_product_category", "color", "quantity_to_sell_on_facebook"
     ])
     writer.writeheader()
 
@@ -55,11 +55,12 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             continue
 
         condition = "New" if item["new_or_used"] == "N" else "Used (like new)"
+        quantity = item.get("quantity", 0)
 
         writer.writerow({
             "id": inv_id,
-            "name": name,
             "no": part_no,
+            "name": name,
             "availability": "In Stock",
             "condition": condition,
             "price": price_str,
@@ -68,7 +69,8 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             "brand": "Lego",
             "google_product_category": "3287",
             "fb_product_category": "47",
-            "color": color
+            "color": color,
+            "quantity_to_sell_on_facebook": quantity
         })
 
 with open("index.html", "w") as f:

@@ -28,15 +28,30 @@ def confirm_identity():
 confirm_identity()
 
 def get_inventory():
-    url = "https://api.bricklink.com/api/store/v1/inventories?page=1"
-    r = requests.get(url, auth=auth)
-    data = r.json()
-    return data.get("data", [])
+    all_items = []
+    page = 1
+    while True:
+        url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
+        r = requests.get(url, auth=auth)
+        if r.status_code != 200:
+            break
+        page_items = r.json().get("data", [])
+        if not page_items:
+            break
+        all_items.extend(page_items)
+        print(f"🔁 Page {page} fetched.")
+        page += 1
+    print(f"📦 Retrieved {len(all_items)} total inventory items.")
+    return all_items
 
 inventory = get_inventory()
 
 with open("meta_product_feed.csv", "w", newline='') as f:
-    writer = csv.DictWriter(f, fieldnames=['id', 'title', 'description', 'availability', 'condition', 'price', 'link', 'image_link', 'brand', 'google_product_category', 'fb_product_category', 'quantity_to_sell_on_facebook', 'sale_price', 'sale_price_effective_date', 'item_group_id', 'gender', 'color', 'size', 'age_group', 'material', 'pattern', 'shipping', 'shipping_weight', 'gtin', 'video[0].url', 'video[0].tag[0]', 'product_tags[0]', 'product_tags[1]', 'style[0]'])
+    writer = csv.DictWriter(f, fieldnames=[
+        "id", "title", "description", "availability", "condition",
+        "price", "link", "image_link", "brand", "google_product_category",
+        "fb_product_category", "color", "quantity_to_sell_on_facebook"
+    ])
     writer.writeheader()
 
     for item in inventory:
@@ -71,6 +86,6 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             "color": color,
             "quantity_to_sell_on_facebook": quantity
         })
-        
+
 with open("index.html", "w") as f:
     f.write("<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0; url=meta_product_feed.csv'></head><body></body></html>")

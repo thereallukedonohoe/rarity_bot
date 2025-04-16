@@ -2,7 +2,7 @@ name: Generate Facebook Product Feed
 
 on:
   schedule:
-    - cron: '0 18 * * *'  # Runs daily at 2am AWST (6pm UTC)
+    - cron: '0 18 * * *'  # 2am AWST
   workflow_dispatch:
 
 jobs:
@@ -31,8 +31,9 @@ jobs:
           BL_TOKEN_SECRET: ${{ secrets.BL_TOKEN_SECRET }}
         run: |
           python generate_facebook_feed.py
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+          git fetch
           git switch gh-pages || git checkout --orphan gh-pages
           mv meta_product_feed.csv index.html . || true
           git add meta_product_feed.csv index.html

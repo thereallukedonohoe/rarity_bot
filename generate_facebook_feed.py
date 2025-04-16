@@ -1,4 +1,4 @@
-# forced refresh after full secret reset
+# Final version with pagination and identity confirmation
 
 import os
 import csv
@@ -13,7 +13,7 @@ auth = OAuth1(
     os.environ['BL_TOKEN_SECRET']
 )
 
-# Confirm account identity
+# Confirm store identity
 def confirm_identity():
     print("🔐 Checking authenticated user...")
     r = requests.get("https://api.bricklink.com/api/store/v1/users/token", auth=auth)
@@ -25,17 +25,26 @@ def confirm_identity():
 
 confirm_identity()
 
-# Get inventory from BrickLink
+# Fetch inventory using pagination
 def get_inventory():
-    print("🔍 Fetching inventory from BrickLink...")
-    r = requests.get("https://api.bricklink.com/api/store/v1/inventories", auth=auth)
-    print(f"🔁 Status Code: {r.status_code}")
-    try:
-        print("🧾 Response:", r.json())
-    except Exception as e:
-        print(f"❌ Error parsing JSON: {e}")
-        return []
-    return r.json().get("data", [])
+    print("🔍 Fetching inventory from BrickLink using pagination...")
+    all_items = []
+    page = 1
+    while True:
+        url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
+        r = requests.get(url, auth=auth)
+        print(f"🔁 Page {page} - Status Code: {r.status_code}")
+        try:
+            data = r.json()
+            page_items = data.get("data", [])
+            if not page_items:
+                break
+            all_items.extend(page_items)
+            page += 1
+        except Exception as e:
+            print(f"❌ Failed to parse page {page}: {e}")
+            break
+    return all_items
 
 inventory = get_inventory()
 

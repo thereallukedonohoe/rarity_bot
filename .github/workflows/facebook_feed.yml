@@ -31,8 +31,8 @@ jobs:
           python generate_facebook_feed.py
           git config --global user.email "github-actions@github.com"
           git config --global user.name "github-actions"
-          git fetch
-          git switch gh-pages || git checkout --orphan gh-pages
+          git fetch origin gh-pages
+          git checkout gh-pages || git checkout --orphan gh-pages
           mv meta_product_feed.csv index.html . || true
           git add meta_product_feed.csv index.html
           git commit -m "Update Facebook product feed (5-page test)" || echo "No changes"

@@ -1,11 +1,11 @@
-# Final version with pagination and identity confirmation
+# Pagination-limited version for testing
 
 import os
 import csv
 import requests
 from requests_oauthlib import OAuth1
 
-# Set up authentication
+# BrickLink API authentication
 auth = OAuth1(
     os.environ['BL_CONSUMER_KEY'],
     os.environ['BL_CONSUMER_SECRET'],
@@ -13,7 +13,7 @@ auth = OAuth1(
     os.environ['BL_TOKEN_SECRET']
 )
 
-# Confirm store identity
+# Confirm identity
 def confirm_identity():
     print("🔐 Checking authenticated user...")
     r = requests.get("https://api.bricklink.com/api/store/v1/users/token", auth=auth)
@@ -25,12 +25,11 @@ def confirm_identity():
 
 confirm_identity()
 
-# Fetch inventory using pagination
+# Fetch up to 5 pages of inventory
 def get_inventory():
-    print("🔍 Fetching inventory from BrickLink using pagination...")
+    print("🔍 Fetching inventory (max 5 pages)...")
     all_items = []
-    page = 1
-    while True:
+    for page in range(1, 6):  # Pages 1 to 5
         url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
         r = requests.get(url, auth=auth)
         print(f"🔁 Page {page} - Status Code: {r.status_code}")
@@ -40,10 +39,10 @@ def get_inventory():
             if not page_items:
                 break
             all_items.extend(page_items)
-            page += 1
         except Exception as e:
             print(f"❌ Failed to parse page {page}: {e}")
             break
+    print(f"📦 Retrieved {len(all_items)} inventory items (test mode).")
     return all_items
 
 inventory = get_inventory()
@@ -52,7 +51,7 @@ if not inventory:
     print("⚠️ No inventory returned — check API account or inventory state.")
     exit(1)
 
-# Write CSV for Facebook feed
+# Write product feed
 with open("meta_product_feed.csv", "w", newline='') as f:
     writer = csv.DictWriter(f, fieldnames=[
         "id", "title", "description", "availability",
@@ -80,6 +79,6 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             "image_link": image
         })
 
-# Create GitHub Pages index file
+# Create GitHub Pages redirect
 with open("index.html", "w") as index:
     index.write("<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0; url=meta_product_feed.csv'></head><body></body></html>")

@@ -27,7 +27,7 @@ confirm_identity()
 def get_inventory():
     print("🔍 Fetching inventory (max 5 pages)...")
     all_items = []
-    for page in range(1, 6):  # Pages 1 to 5
+    for page in range(1, 6):
         url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
         r = requests.get(url, auth=auth)
         print(f"🔁 Page {page} - Status Code: {r.status_code}")
@@ -56,23 +56,35 @@ with open("meta_product_feed.csv", "w", newline='') as f:
         "price", "link", "image_link"
     ])
     writer.writeheader()
+    seen_ids = set()
     for item in inventory:
         part_no = item["item"]["no"]
         color_id = item["color_id"]
         qty = item["quantity"]
         price = item["unit_price"]
-        inv_id = item["inventory_id"]
+        inv_id = f"{item['inventory_id']}_{color_id}"  # Ensure uniqueness
         condition = item["new_or_used"]
+
+        if price is None:
+            continue  # Skip items with no price
+
+        price_str = f"{price:.2f} AUD"
+
+        if inv_id in seen_ids:
+            continue
+        seen_ids.add(inv_id)
+
         title = f"{part_no} ({condition})"
         description = f"{condition} LEGO part in colour {color_id} – Qty: {qty}"
         url = f"https://store.bricklink.com/luke.donohoe#/shop"
         image = f"https://www.bricklink.com/PL/{part_no}.jpg"
+
         writer.writerow({
             "id": inv_id,
             "title": title,
             "description": description,
             "availability": "in stock",
-            "price": price,
+            "price": price_str,
             "link": url,
             "image_link": image
         })

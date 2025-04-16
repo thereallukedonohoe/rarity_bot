@@ -35,7 +35,7 @@ inventory = get_inventory()
 
 with open("meta_product_feed.csv", "w", newline='') as f:
     writer = csv.DictWriter(f, fieldnames=[
-        "id", "title", "description", "availability", "condition",
+        "id", "name", "no", "availability", "condition",
         "price", "link", "image_link", "brand", "google_product_category",
         "fb_product_category", "color"
     ])
@@ -54,12 +54,14 @@ with open("meta_product_feed.csv", "w", newline='') as f:
         except (TypeError, ValueError):
             continue
 
+        condition = "New" if item["new_or_used"] == "N" else "Used (like new)"
+
         writer.writerow({
             "id": inv_id,
-            "title": part_no,
-            "description": name,
+            "name": name,
+            "no": part_no,
             "availability": "In Stock",
-            "condition": "new" if item["new_or_used"] == "N" else "used",
+            "condition": condition,
             "price": price_str,
             "link": f"https://store.bricklink.com/luke.donohoe#/shop",
             "image_link": f"https://www.bricklink.com/PL/{part_no}.jpg",

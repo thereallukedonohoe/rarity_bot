@@ -65,10 +65,12 @@ with open("meta_product_feed.csv", "w", newline='') as f:
         inv_id = f"{item['inventory_id']}_{color_id}"  # Ensure uniqueness
         condition = item["new_or_used"]
 
-        if price is None:
-            continue  # Skip items with no price
-
-        price_str = f"{price:.2f} AUD"
+        # Ensure price is valid
+        try:
+            price_float = float(price)
+            price_str = f"{price_float:.2f} AUD"
+        except (TypeError, ValueError):
+            continue  # Skip items with invalid prices
 
         if inv_id in seen_ids:
             continue

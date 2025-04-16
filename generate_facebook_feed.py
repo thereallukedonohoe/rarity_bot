@@ -5,6 +5,7 @@ import csv
 import requests
 from requests_oauthlib import OAuth1
 
+# Set up authentication
 auth = OAuth1(
     os.environ['BL_CONSUMER_KEY'],
     os.environ['BL_CONSUMER_SECRET'],
@@ -12,6 +13,19 @@ auth = OAuth1(
     os.environ['BL_TOKEN_SECRET']
 )
 
+# Confirm account identity
+def confirm_identity():
+    print("🔐 Checking authenticated user...")
+    r = requests.get("https://api.bricklink.com/api/store/v1/users/token", auth=auth)
+    try:
+        user = r.json().get('data', {}).get('username', 'unknown')
+        print(f"👤 Authenticated as: {user}")
+    except Exception as e:
+        print(f"❌ Failed to confirm identity: {e}")
+
+confirm_identity()
+
+# Get inventory from BrickLink
 def get_inventory():
     print("🔍 Fetching inventory from BrickLink...")
     r = requests.get("https://api.bricklink.com/api/store/v1/inventories", auth=auth)
@@ -26,9 +40,10 @@ def get_inventory():
 inventory = get_inventory()
 
 if not inventory:
-    print("⚠️ No inventory returned — check API credentials or permissions.")
+    print("⚠️ No inventory returned — check API account or inventory state.")
     exit(1)
 
+# Write CSV for Facebook feed
 with open("meta_product_feed.csv", "w", newline='') as f:
     writer = csv.DictWriter(f, fieldnames=[
         "id", "title", "description", "availability",
@@ -44,7 +59,7 @@ with open("meta_product_feed.csv", "w", newline='') as f:
         condition = item["new_or_used"]
         title = f"{part_no} ({condition})"
         description = f"{condition} LEGO part in colour {color_id} – Qty: {qty}"
-        url = f"https://store.bricklink.com/YOURUSERNAME#/inventory"
+        url = f"https://store.bricklink.com/luke.donohoe#/shop"
         image = f"https://www.bricklink.com/PL/{part_no}.jpg"
         writer.writerow({
             "id": inv_id,
@@ -56,6 +71,6 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             "image_link": image
         })
 
-# Write index.html for GitHub Pages
+# Create GitHub Pages index file
 with open("index.html", "w") as index:
     index.write("<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0; url=meta_product_feed.csv'></head><body></body></html>")

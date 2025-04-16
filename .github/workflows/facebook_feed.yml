@@ -42,5 +42,5 @@ jobs:
           git add .
           git commit -m "Push Facebook feed (5-page test)"
           git branch -M gh-pages
-          git remote add origin https://github.com/${{ github.repository }}.git
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git push -f origin gh-pages

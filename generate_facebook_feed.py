@@ -23,11 +23,12 @@ def confirm_identity():
 
 confirm_identity()
 
-# Fetch up to 5 pages of inventory
+# Fetch ALL pages of inventory
 def get_inventory():
-    print("🔍 Fetching inventory (max 5 pages)...")
+    print("🔍 Fetching full inventory from BrickLink...")
     all_items = []
-    for page in range(1, 6):
+    page = 1
+    while True:
         url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
         r = requests.get(url, auth=auth)
         print(f"🔁 Page {page} - Status Code: {r.status_code}")
@@ -37,10 +38,11 @@ def get_inventory():
             if not page_items:
                 break
             all_items.extend(page_items)
+            page += 1
         except Exception as e:
             print(f"❌ Failed to parse page {page}: {e}")
             break
-    print(f"📦 Retrieved {len(all_items)} inventory items (test mode).")
+    print(f"📦 Retrieved {len(all_items)} total inventory items.")
     return all_items
 
 inventory = get_inventory()
@@ -70,7 +72,7 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             price_float = float(price)
             price_str = f"{price_float:.2f} AUD"
         except (TypeError, ValueError):
-            continue  # Skip items with invalid prices
+            continue
 
         if inv_id in seen_ids:
             continue

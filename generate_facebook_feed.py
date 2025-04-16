@@ -11,7 +11,6 @@ auth = OAuth1(
 )
 
 color_names = {0: 'Black', 1: 'Blue', 2: 'Green', 3: 'Dark Turquoise', 4: 'Red', 5: 'Dark Pink', 6: 'Brown', 7: 'Tan', 8: 'Yellow', 9: 'White', 10: 'Orange', 11: 'Light Gray', 12: 'Gray', 13: 'Light Blue', 14: 'Lime', 15: 'Pink', 16: 'Dark Yellow', 17: 'Tan', 18: 'Purple', 19: 'Blue-Violet', 20: 'Dark Blue', 21: 'Light Green', 22: 'Dark Green', 23: 'Magenta', 24: 'Light Purple', 25: 'Light Yellow', 26: 'Turquoise', 27: 'Light Lime', 28: 'Violet', 29: 'Bright Pink', 30: 'Very Light Gray', 34: 'Chrome Gold', 36: 'Chrome Silver', 38: 'Chrome Black', 39: 'Dark Orange', 42: 'Medium Blue', 68: 'Dark Tan', 69: 'Reddish Brown', 71: 'Maersk Blue', 72: 'Light Aqua', 73: 'Dark Red', 74: 'Metallic Silver', 77: 'Dark Bluish Gray', 78: 'Light Bluish Gray', 85: 'Dark Brown', 86: 'Dark Tan', 87: 'Dark Azure', 88: 'Medium Azure', 89: 'Light Aqua', 90: 'Lavender', 91: 'Dark Lavender', 110: 'Bright Light Orange', 115: 'Pearl Gold', 120: 'Flat Silver'}
-
 type_labels = {
     "P": "Part",
     "M": "Minifig",
@@ -37,29 +36,25 @@ def get_inventory():
 inventory = get_inventory()
 
 with open("meta_product_feed.csv", "w", newline='') as f:
-    writer = csv.DictWriter(f, fieldnames=[
-        "id", "title", "description", "availability", "condition",
-        "price", "link", "image_link", "brand", "google_product_category",
-        "fb_product_category", "color", "quantity_to_sell_on_facebook"
-    ])
+    writer = csv.DictWriter(f, fieldnames=['id', 'title', 'description', 'availability', 'condition', 'price', 'link', 'image_link', 'brand', 'google_product_category', 'fb_product_category', 'quantity_to_sell_on_facebook', 'sale_price', 'sale_price_effective_date', 'item_group_id', 'gender', 'color', 'size', 'age_group', 'material', 'pattern', 'shipping', 'shipping_weight', 'gtin', 'video[0].url', 'video[0].tag[0]', 'product_tags[0]', 'product_tags[1]', 'style[0]'])
     writer.writeheader()
 
     for item in inventory:
         part = item.get("item", {})
         part_no = part.get("no", "N/A")
         part_type = part.get("type", "P")
-        name = part.get("name", "LEGO Part")
+        name = part.get("name", "")
         description = f"{type_labels.get(part_type, part_type)} - {part_no}"
         color = color_names.get(item["color_id"], f"Color ID {item['color_id']}")
+        quantity = item.get("quantity", 0)
 
         try:
             price_float = float(item["unit_price"])
             price_str = f"{price_float:.2f} AUD"
         except (TypeError, ValueError):
-            continue
+            price_str = ""
 
         condition = "New" if item["new_or_used"] == "N" else "Used (like new)"
-        quantity = item.get("quantity", 0)
 
         writer.writerow({
             "id": item["inventory_id"],
@@ -76,6 +71,6 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             "color": color,
             "quantity_to_sell_on_facebook": quantity
         })
-
+        
 with open("index.html", "w") as f:
     f.write("<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0; url=meta_product_feed.csv'></head><body></body></html>")

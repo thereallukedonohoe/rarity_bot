@@ -1,4 +1,4 @@
-name: Generate Facebook Product Feed (Test - 5 Pages)
+name: Generate Facebook Product Feed
 
 on:
   workflow_dispatch:

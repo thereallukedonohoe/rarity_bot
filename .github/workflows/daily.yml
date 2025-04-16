@@ -1,9 +1,11 @@
+# Trigger refresh for GitHub Actions indexing
+
 name: Daily BrickLink Rarity Update
 
 on:
   schedule:
-    - cron: '0 18 * * *'  # 2am AWST
-  workflow_dispatch:
+    - cron: '0 18 * * *'  # Runs daily at 2am AWST / 6pm UTC
+  workflow_dispatch:       # Allows manual triggering too
 
 jobs:
   build:

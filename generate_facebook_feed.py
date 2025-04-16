@@ -1,42 +1,82 @@
-name: Generate Facebook Product Feed (Test - 5 Pages)
+import os
+import csv
+import requests
+from requests_oauthlib import OAuth1
 
-on:
-  workflow_dispatch:
+# BrickLink API authentication
+auth = OAuth1(
+    os.environ['BL_CONSUMER_KEY'],
+    os.environ['BL_CONSUMER_SECRET'],
+    os.environ['BL_TOKEN_VALUE'],
+    os.environ['BL_TOKEN_SECRET']
+)
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# Confirm identity
+def confirm_identity():
+    print("🔐 Checking authenticated user...")
+    r = requests.get("https://api.bricklink.com/api/store/v1/users/token", auth=auth)
+    try:
+        user = r.json().get('data', {}).get('username', 'unknown')
+        print(f"👤 Authenticated as: {user}")
+    except Exception as e:
+        print(f"❌ Failed to confirm identity: {e}")
 
-    steps:
-      - name: Checkout main branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # full history for branch switching
+confirm_identity()
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+# Fetch up to 5 pages of inventory
+def get_inventory():
+    print("🔍 Fetching inventory (max 5 pages)...")
+    all_items = []
+    for page in range(1, 6):  # Pages 1 to 5
+        url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
+        r = requests.get(url, auth=auth)
+        print(f"🔁 Page {page} - Status Code: {r.status_code}")
+        try:
+            data = r.json()
+            page_items = data.get("data", [])
+            if not page_items:
+                break
+            all_items.extend(page_items)
+        except Exception as e:
+            print(f"❌ Failed to parse page {page}: {e}")
+            break
+    print(f"📦 Retrieved {len(all_items)} inventory items (test mode).")
+    return all_items
 
-      - name: Install dependencies
-        run: pip install requests requests_oauthlib
+inventory = get_inventory()
 
-      - name: Generate feed
-        env:
-          BL_CONSUMER_KEY: ${{ secrets.BL_CONSUMER_KEY }}
-          BL_CONSUMER_SECRET: ${{ secrets.BL_CONSUMER_SECRET }}
-          BL_TOKEN_VALUE: ${{ secrets.BL_TOKEN_VALUE }}
-          BL_TOKEN_SECRET: ${{ secrets.BL_TOKEN_SECRET }}
-        run: |
-          python generate_facebook_feed.py
+if not inventory:
+    print("⚠️ No inventory returned — check API account or inventory state.")
+    exit(1)
 
-      - name: Push to gh-pages
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "github-actions"
-          git fetch origin gh-pages
-          git checkout gh-pages || git checkout --orphan gh-pages
-          mv meta_product_feed.csv index.html . || true
-          git add meta_product_feed.csv index.html
-          git commit -m "Update Facebook product feed (5-page test)" || echo "No changes"
-          git push origin gh-pages
+# Write product feed
+with open("meta_product_feed.csv", "w", newline='') as f:
+    writer = csv.DictWriter(f, fieldnames=[
+        "id", "title", "description", "availability",
+        "price", "link", "image_link"
+    ])
+    writer.writeheader()
+    for item in inventory:
+        part_no = item["item"]["no"]
+        color_id = item["color_id"]
+        qty = item["quantity"]
+        price = item["unit_price"]
+        inv_id = item["inventory_id"]
+        condition = item["new_or_used"]
+        title = f"{part_no} ({condition})"
+        description = f"{condition} LEGO part in colour {color_id} – Qty: {qty}"
+        url = f"https://store.bricklink.com/luke.donohoe#/shop"
+        image = f"https://www.bricklink.com/PL/{part_no}.jpg"
+        writer.writerow({
+            "id": inv_id,
+            "title": title,
+            "description": description,
+            "availability": "in stock",
+            "price": price,
+            "link": url,
+            "image_link": image
+        })
+
+# Create GitHub Pages redirect
+with open("index.html", "w") as index:
+    index.write("<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0; url=meta_product_feed.csv'></head><body></body></html>")

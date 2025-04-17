@@ -43,7 +43,7 @@ confirm_identity()
 
 def get_inventory():
     all_items = []
-    for page in range(1, 2):  # Limit to 1 page for testing
+    for page in range(1, 2):  # 1 page for testing
         url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
         r = requests.get(url, auth=auth)
         if r.status_code != 200:
@@ -93,7 +93,7 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             "condition": condition,
             "price": price_str,
             "link": f"https://store.bricklink.com/luke.donohoe#/shop?o={{\"q\":\"{item['inventory_id']}\",\"sort\":0,\"pgSize\":100,\"showHomeItems\":0}}",
-            "image_link": f"https://www.bricklink.com/PL/{part_no}.jpg",
+            "image_link": f"https://img.bricklink.com/ItemImage/PL/{color_id}/{part_no}.png",
             "brand": "Lego",
             "google_product_category": "3287",
             "fb_product_category": "47",

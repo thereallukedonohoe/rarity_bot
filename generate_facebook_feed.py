@@ -12,21 +12,29 @@ auth = OAuth1(
     os.environ['BL_TOKEN_SECRET']
 )
 
-# BrickLink official color ID to name mapping (based on catalogColors.asp)
+# Official BrickLink color ID to name mapping
 color_lookup = {
-    0: "Black", 1: "Blue", 2: "Green", 3: "Dark Turquoise", 4: "Red", 5: "Dark Pink", 6: "Brown",
-    7: "Tan", 8: "Yellow", 9: "White", 10: "Orange", 11: "Light Gray", 12: "Gray", 13: "Light Blue",
-    14: "Lime", 15: "Pink", 17: "Light Yellow", 18: "Purple", 19: "Blue-Violet", 20: "Dark Blue",
-    21: "Light Green", 22: "Dark Green", 23: "Magenta", 25: "Very Light Orange", 26: "Turquoise",
-    27: "Light Lime", 28: "Violet", 29: "Bright Pink", 30: "Light Gray", 31: "Very Light Gray",
-    32: "Bright Light Blue", 33: "Rust", 34: "Bright Light Orange", 35: "Metallic Silver",
-    36: "Metallic Gold", 38: "Pearl Light Gray", 39: "Dark Orange", 40: "Sand Red", 42: "Medium Blue",
-    43: "Maersk Blue", 45: "Dark Red", 47: "Pearl Gold", 52: "Flat Silver", 57: "Flat Dark Gold",
-    68: "Dark Tan", 69: "Reddish Brown", 70: "Bright Light Yellow", 71: "Dark Bluish Gray",
-    72: "Light Bluish Gray", 73: "Medium Blue", 74: "Medium Green", 77: "Dark Bluish Gray",
-    78: "Light Bluish Gray", 80: "Dark Brown", 88: "Dark Azure", 89: "Medium Azure",
-    90: "Light Aqua", 91: "Lavender", 92: "Dark Lavender", 95: "Spring Yellowish Green",
-    99: "Aqua", 110: "Bright Light Orange", 115: "Pearl Gold", 120: "Flat Silver"
+    0: "White", 1: "Tan", 2: "Yellow", 3: "Blue", 4: "Red", 5: "Dark Pink", 6: "Black",
+    7: "Blue", 8: "Brown", 9: "Light Gray", 10: "Gray", 11: "Dark Gray", 12: "Light Blue",
+    13: "Lime", 14: "Pink", 15: "Dark Yellow", 16: "Tan", 17: "Light Green", 18: "Green",
+    19: "Dark Green", 20: "Dark Turquoise", 21: "Light Turquoise", 22: "Sand Blue",
+    23: "Sand Green", 24: "Sand Red", 25: "Dark Blue", 26: "Light Lime", 27: "Dark Orange",
+    28: "Very Light Blue", 29: "Bright Light Orange", 30: "Bright Light Blue", 31: "Light Blue-Violet",
+    32: "Medium Blue", 33: "Medium Green", 34: "Earth Orange", 35: "Medium Orange",
+    36: "Dark Red", 37: "Dark Pink", 38: "Light Pink", 39: "Light Yellow", 40: "Light Purple",
+    41: "Dark Purple", 42: "Chrome Gold", 43: "Chrome Silver", 44: "Chrome Black",
+    45: "Pearl Light Gray", 46: "Pearl Dark Gray", 47: "Pearl Very Light Gray", 48: "Pearl White",
+    49: "Pearl Blue", 50: "Pearl Green", 51: "Pearl Red", 52: "Pearl Gold", 53: "Pearl Copper",
+    54: "Trans-Clear", 55: "Trans-Black", 56: "Trans-Red", 57: "Trans-Green", 58: "Trans-Blue",
+    59: "Trans-Yellow", 60: "Trans-Neon Orange", 61: "Trans-Neon Green", 62: "Trans-Light Blue",
+    63: "Trans-Purple", 64: "Trans-Pink", 65: "Metallic Gold", 66: "Metallic Silver",
+    67: "Glow in Dark White", 68: "Glow in Dark Opaque", 69: "Glow in Dark Trans",
+    70: "Milky White", 71: "Chrome Blue", 72: "Chrome Green", 73: "Chrome Pink",
+    74: "Chrome Red", 75: "Chrome Orange", 76: "Speckle Black-Silver", 77: "Speckle Black-Gold",
+    78: "Speckle Black-Copper", 79: "Rubber Black", 80: "Rubber White", 81: "Rubber Blue",
+    82: "Rubber Red", 83: "Rubber Yellow", 84: "Rubber Trans-Clear", 85: "Rubber Dark Gray",
+    86: "Rubber Light Gray", 87: "Rubber Green", 88: "Rubber Orange", 89: "Rubber Lime",
+    90: "Rubber Brown", 91: "Rubber Tan", 92: "Rubber Pink", 93: "Rubber Purple"
 }
 
 type_labels = {

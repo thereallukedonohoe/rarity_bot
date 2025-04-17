@@ -1,49 +1,52 @@
 name: Generate Facebook Product Feed
 
 on:
+  schedule:
+    - cron: "0 18 * * *"  # Runs at 2am AWST (UTC+8)
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main branch
+      - name: Check out repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.10"
 
-      - name: Install dependencies
-        run: pip install requests requests_oauthlib
-
-      - name: Generate feed
-        env:
-          BL_CONSUMER_KEY: ${{ secrets.BL_CONSUMER_KEY }}
-          BL_CONSUMER_SECRET: ${{ secrets.BL_CONSUMER_SECRET }}
-          BL_TOKEN_VALUE: ${{ secrets.BL_TOKEN_VALUE }}
-          BL_TOKEN_SECRET: ${{ secrets.BL_TOKEN_SECRET }}
+      - name: Install base dependencies
         run: |
-          python generate_facebook_feed.py
+          pip install requests requests-oauthlib
 
-      - name: Deploy feed to gh-pages
+      - name: Generate BrickLink product feed
+        run: python generate_facebook_feed.py
+
+      - name: Install Playwright and browser
         run: |
-          mkdir gh-pages
-          cp meta_product_feed.csv gh-pages/
-          cp index.html gh-pages/
-          cd gh-pages
-          git init
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add .
-          git commit -m "Push Facebook feed (5-page test)"
-          git branch -M gh-pages
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git push -f origin gh-pages
+          pip install playwright
+          playwright install
+
+      - name: Scrape titles, colors, and image links for 5 items
+        run: python fetch_storefront_data.py
+
+      - name: Replace original feed with updated image links
+        run: mv meta_product_feed_with_images.csv meta_product_feed.csv
+
+      - name: Commit and push feed
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add meta_product_feed.csv index.html
+          git commit -m "🧱 Update Facebook product feed with scraped data"
+          git push
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          publish_branch: gh-pages

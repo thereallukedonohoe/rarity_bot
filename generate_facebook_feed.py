@@ -42,10 +42,19 @@ def confirm_identity():
 confirm_identity()
 
 def get_inventory():
-    url = "https://api.bricklink.com/api/store/v1/inventories?page=1"
-    r = requests.get(url, auth=auth)
-    data = r.json()
-    return data.get("data", [])
+    all_items = []
+    for page in range(1, 2):  # Limit to 1 page for testing
+        url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
+        r = requests.get(url, auth=auth)
+        if r.status_code != 200:
+            break
+        page_items = r.json().get("data", [])
+        if not page_items:
+            break
+        all_items.extend(page_items)
+        print(f"🔁 Page {page} fetched.")
+    print(f"📦 Retrieved {len(all_items)} inventory items.")
+    return all_items
 
 inventory = get_inventory()
 
@@ -83,7 +92,7 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             "availability": "In Stock",
             "condition": condition,
             "price": price_str,
-            "link": f"https://store.bricklink.com/luke.donohoe#/shop?o={{"q":"{item['inventory_id']}","sort":0,"pgSize":100,"showHomeItems":0}}",
+            "link": f"https://store.bricklink.com/luke.donohoe#/shop?o={{\"q\":\"{item['inventory_id']}\",\"sort\":0,\"pgSize\":100,\"showHomeItems\":0}}",
             "image_link": f"https://www.bricklink.com/PL/{part_no}.jpg",
             "brand": "Lego",
             "google_product_category": "3287",

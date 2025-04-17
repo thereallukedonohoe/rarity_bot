@@ -12,7 +12,7 @@ auth = OAuth1(
     os.environ['BL_TOKEN_SECRET']
 )
 
-# BrickLink official color ID to name mapping (fully closed dictionary!)
+# BrickLink official color ID to name mapping (based on catalogColors.asp)
 color_lookup = {
     0: "Black", 1: "Blue", 2: "Green", 3: "Dark Turquoise", 4: "Red", 5: "Dark Pink", 6: "Brown",
     7: "Tan", 8: "Yellow", 9: "White", 10: "Orange", 11: "Light Gray", 12: "Gray", 13: "Light Blue",
@@ -88,6 +88,15 @@ with open("meta_product_feed.csv", "w", newline='') as f:
             price_str = ""
 
         condition = "New" if item["new_or_used"] == "N" else "Used (like new)"
+
+        # 🔍 DEBUG for Lot ID 470335588
+        if item["inventory_id"] == 470335588:
+            print("\n🧪 DEBUG — Lot ID 470335588")
+            print(f"→ Raw Name: {raw_name}")
+            print(f"→ Unescaped Name: {name}")
+            print(f"→ Color ID: {color_id}")
+            print(f"→ Resolved Color: {color}")
+            print(f"→ Final Title: {color} {name}")
 
         writer.writerow({
             "id": item["inventory_id"],

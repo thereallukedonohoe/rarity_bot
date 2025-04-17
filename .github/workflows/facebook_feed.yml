@@ -1,9 +1,9 @@
 name: Generate Facebook Product Feed
 
 on:
-  schedule:
-    - cron: "0 18 * * *"  # Runs at 2am AWST (UTC+8)
   workflow_dispatch:
+  schedule:
+    - cron: "0 18 * * *"  # Runs daily at 2am AWST
 
 jobs:
   build:
@@ -23,12 +23,12 @@ jobs:
           pip install requests requests-oauthlib
 
       - name: Generate BrickLink product feed
-  run: python generate_facebook_feed.py
-  env:
-    BL_CONSUMER_KEY: ${{ secrets.BL_CONSUMER_KEY }}
-    BL_CONSUMER_SECRET: ${{ secrets.BL_CONSUMER_SECRET }}
-    BL_TOKEN_VALUE: ${{ secrets.BL_TOKEN_VALUE }}
-    BL_TOKEN_SECRET: ${{ secrets.BL_TOKEN_SECRET }}
+        run: python generate_facebook_feed.py
+        env:
+          BL_CONSUMER_KEY: ${{ secrets.BL_CONSUMER_KEY }}
+          BL_CONSUMER_SECRET: ${{ secrets.BL_CONSUMER_SECRET }}
+          BL_TOKEN_VALUE: ${{ secrets.BL_TOKEN_VALUE }}
+          BL_TOKEN_SECRET: ${{ secrets.BL_TOKEN_SECRET }}
 
       - name: Install Playwright and browser
         run: |

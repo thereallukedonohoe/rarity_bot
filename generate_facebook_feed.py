@@ -1,186 +1,58 @@
-import os
+import asyncio
+import json
 import csv
-import requests
-from requests_oauthlib import OAuth1
-from html import unescape
+from playwright.async_api import async_playwright
 
-# BrickLink API authentication
-auth = OAuth1(
-    os.environ['BL_CONSUMER_KEY'],
-    os.environ['BL_CONSUMER_SECRET'],
-    os.environ['BL_TOKEN_VALUE'],
-    os.environ['BL_TOKEN_SECRET']
-)
+USERNAME = "luke.donohoe"
+INPUT_FILE = "meta_product_feed.csv"
+OUTPUT_FILE = "meta_product_feed_with_images.csv"
 
-# Corrected BrickLink color ID to name mapping
-color_lookup = {
-    0: "Black",
-    1: "Blue",
-    2: "Green",
-    3: "Dark Turquoise",
-    4: "Red",
-    5: "Dark Pink",
-    6: "Brown",
-    7: "Tan",
-    8: "Yellow",
-    9: "White",
-    10: "Orange",
-    11: "Light Gray",
-    12: "Gray",
-    13: "Light Blue",
-    14: "Lime",
-    15: "Pink",
-    17: "Light Yellow",
-    18: "Purple",
-    19: "Blue-Violet",
-    20: "Dark Blue",
-    21: "Light Green",
-    22: "Dark Green",
-    23: "Magenta",
-    25: "Very Light Orange",
-    26: "Turquoise",
-    27: "Light Lime",
-    28: "Lavender",
-    29: "Light Purple",
-    30: "Bright Pink",
-    31: "Reddish Brown",
-    32: "Light Bluish Gray",
-    33: "Dark Bluish Gray",
-    34: "Speckle Black-Silver",
-    35: "Speckle Black-Gold",
-    36: "Speckle Black-Copper",
-    37: "Flesh",
-    38: "Light Flesh",
-    39: "Dark Flesh",
-    40: "Chrome Gold",
-    41: "Chrome Silver",
-    42: "Chrome Black",
-    43: "Sand Red",
-    44: "Sand Blue",
-    45: "Sand Green",
-    46: "Chrome Blue",
-    47: "Pearl Gold",
-    48: "Pearl Light Gray",
-    49: "Pearl Dark Gray",
-    50: "Pearl Very Light Gray",
-    51: "Pearl White",
-    52: "Flat Silver",
-    54: "Trans-Clear",
-    57: "Trans-Red",
-    60: "Trans-Yellow",
-    61: "Trans-Black",
-    62: "Trans-Light Blue",
-    63: "Trans-Green",
-    64: "Trans-Neon Orange",
-    66: "Trans-Dark Blue",
-    68: "Dark Tan",
-    69: "Medium Blue",
-    70: "Medium Green",
-    71: "Dark Orange",
-    72: "Chrome Green",
-    73: "Very Light Gray",
-    74: "Bright Light Orange",
-    75: "Bright Light Blue",
-    76: "Rust",
-    77: "Bright Light Yellow",
-    78: "Sky Blue",
-    79: "Light Lime",
-    80: "Dark Brown",
-    82: "Medium Lavender",
-    83: "Lavender",
-    84: "Trans-Purple",
-    85: "Trans-Pink",
-    86: "Trans-Light Purple",
-    87: "Trans-Neon Green",
-    88: "Trans-Orange",
-    89: "Trans-Bright Green",
-    90: "Trans-Light Green",
-    91: "Trans-Light Pink",
-    92: "Trans-Yellowish Green",
-    95: "Spring Yellowish Green",
-    100: "Metallic Silver",
-    115: "Pearl Gold",
-    120: "Flat Silver",
-    151: "Glow in Dark White",
-    154: "Glow in Dark Trans",
-    156: "Dark Bluish Gray"
-}
+async def scrape_storefront_data(playwright, inventory_id):
+    browser = await playwright.chromium.launch()
+    page = await browser.new_page()
+    url = f"https://store.bricklink.com/{USERNAME}#/shop?o={json.dumps({'q': str(inventory_id)})}"
+    await page.goto(url)
+    await page.wait_for_selector("img[src^='https://img.bricklink.com']", timeout=10000)
+    await page.wait_for_selector(".itemBoxMain", timeout=10000)
 
-type_labels = {
-    "P": "Part",
-    "M": "Minifig",
-    "S": "Set"
-}
+    # Get image
+    image_element = await page.query_selector("img[src^='https://img.bricklink.com']")
+    image_url = await image_element.get_attribute("src")
 
-def confirm_identity():
-    r = requests.get("https://api.bricklink.com/api/store/v1/users/token", auth=auth)
-    try:
-        user = r.json().get('data', {}).get('username', 'unknown')
-        print(f"👤 Authenticated as: {user}")
-    except Exception as e:
-        print(f"❌ Identity error: {e}")
+    # Get title (e.g. "Light Bluish Gray Flag 2 x 2 Square")
+    title_element = await page.query_selector(".itemBoxMain b")
+    title_text = await title_element.inner_text()
 
-confirm_identity()
+    await browser.close()
+    return {
+        "image_link": image_url.strip(),
+        "title": title_text.strip(),
+        "color": title_text.split()[0]  # crude extract — better logic can be added later
+    }
 
-def get_inventory():
-    all_items = []
-    for page in range(1, 2):  # LIMIT: 1 page for testing
-        url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
-        r = requests.get(url, auth=auth)
-        if r.status_code != 200:
-            break
-        page_items = r.json().get("data", [])
-        if not page_items:
-            break
-        all_items.extend(page_items)
-        print(f"🔁 Page {page} fetched.")
-    print(f"📦 Retrieved {len(all_items)} inventory items.")
-    return all_items
+async def run():
+    with open(INPUT_FILE, newline='') as infile:
+        reader = csv.DictReader(infile)
+        rows = list(reader)
 
-inventory = get_inventory()
+    updated_rows = []
+    async with async_playwright() as playwright:
+        for row in rows[:5]:  # LIMIT TO 5
+            inventory_id = row["id"]
+            print(f"🔍 Scraping data for Lot ID {inventory_id}...")
+            try:
+                result = await scrape_storefront_data(playwright, inventory_id)
+                row["image_link"] = result["image_link"]
+                row["title"] = result["title"]
+                row["color"] = result["color"]
+            except Exception as e:
+                print(f"⚠️ Failed for Lot ID {inventory_id}: {e}")
+            updated_rows.append(row)
 
-with open("meta_product_feed.csv", "w", newline='') as f:
-    writer = csv.DictWriter(f, fieldnames=[
-        "id", "title", "description", "availability", "condition",
-        "price", "link", "image_link", "brand", "google_product_category",
-        "fb_product_category", "color", "quantity_to_sell_on_facebook"
-    ])
-    writer.writeheader()
+    # Write output
+    with open(OUTPUT_FILE, "w", newline='') as outfile:
+        writer = csv.DictWriter(outfile, fieldnames=updated_rows[0].keys())
+        writer.writeheader()
+        writer.writerows(updated_rows)
 
-    for item in inventory:
-        part = item.get("item", {})
-        part_no = part.get("no", "N/A")
-        part_type = part.get("type", "P")
-        raw_name = part.get("name", "")
-        name = unescape(raw_name)
-        color_id = item["color_id"]
-        color = color_lookup.get(color_id, f"Color ID {color_id}")
-        description = f"{type_labels.get(part_type, part_type)} - {part_no}"
-        quantity = item.get("quantity", 0)
-
-        try:
-            price_float = float(item["unit_price"])
-            price_str = f"{price_float:.2f} AUD"
-        except (TypeError, ValueError):
-            price_str = ""
-
-        condition = "New" if item["new_or_used"] == "N" else "Used (like new)"
-
-        writer.writerow({
-            "id": item["inventory_id"],
-            "title": f"{color} {name}",
-            "description": description,
-            "availability": "In Stock",
-            "condition": condition,
-            "price": price_str,
-            "link": f"https://store.bricklink.com/luke.donohoe#/shop?o={{\"q\":\"{item['inventory_id']}\",\"sort\":0,\"pgSize\":100,\"showHomeItems\":0}}",
-            "image_link": f"https://www.bricklink.com/PL/{part_no}.jpg",  # Placeholder
-            "brand": "Lego",
-            "google_product_category": "3287",
-            "fb_product_category": "47",
-            "color": color,
-            "quantity_to_sell_on_facebook": quantity
-        })
-
-with open("index.html", "w") as f:
-    f.write("<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0; url=meta_product_feed.csv'></head><body></body></html>")
+asyncio.run(run())

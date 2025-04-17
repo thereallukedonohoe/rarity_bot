@@ -12,20 +12,6 @@ auth = OAuth1(
     os.environ['BL_TOKEN_SECRET']
 )
 
-# Color ID to name mapping (can be trimmed as needed)
-color_lookup = {
-    0: "Black", 1: "Blue", 2: "Green", 3: "Dark Turquoise", 4: "Red", 5: "Dark Pink", 6: "Brown",
-    7: "Tan", 8: "Yellow", 9: "White", 10: "Orange", 11: "Light Gray", 12: "Gray", 13: "Light Blue",
-    14: "Lime", 15: "Pink", 16: "Dark Yellow", 17: "Light Green", 18: "Purple", 19: "Blue-Violet",
-    20: "Dark Blue", 21: "Light Green", 22: "Dark Green", 23: "Magenta", 25: "Very Light Orange",
-    26: "Turquoise", 27: "Light Lime", 28: "Lavender", 29: "Light Purple", 30: "Bright Pink",
-    31: "Reddish Brown", 32: "Light Bluish Gray", 33: "Dark Bluish Gray", 34: "Speckle Black-Silver",
-    36: "Chrome Silver", 38: "Pearl Light Gray", 39: "Dark Orange", 42: "Medium Blue",
-    68: "Dark Tan", 69: "Reddish Brown", 73: "Very Light Gray", 77: "Dark Bluish Gray",
-    78: "Light Bluish Gray", 80: "Dark Brown", 88: "Dark Azure", 89: "Medium Azure",
-    90: "Light Aqua", 91: "Lavender", 120: "Flat Silver"
-}
-
 type_labels = {
     "P": "Part",
     "M": "Minifig",
@@ -44,7 +30,7 @@ confirm_identity()
 
 def get_inventory():
     all_items = []
-    for page in range(1, 2):  # Limit to 1 page for testing
+    for page in range(1, 2):  # Limit to 1 page for test
         url = f"https://api.bricklink.com/api/store/v1/inventories?page={page}"
         r = requests.get(url, auth=auth)
         if r.status_code != 200:
@@ -73,8 +59,6 @@ with open("meta_product_feed.csv", "w", newline='') as f:
         part_type = part.get("type", "P")
         raw_name = part.get("name", "")
         name = unescape(raw_name)
-        color_id = item["color_id"]
-        color = color_lookup.get(color_id, f"Color ID {color_id}")
         description = f"{type_labels.get(part_type, part_type)} - {part_no}"
         quantity = item.get("quantity", 0)
 
@@ -88,17 +72,17 @@ with open("meta_product_feed.csv", "w", newline='') as f:
 
         writer.writerow({
             "id": item["inventory_id"],
-            "title": f"{color} {name}",
+            "title": "PLACEHOLDER",  # Replaced via scraping
             "description": description,
             "availability": "In Stock",
             "condition": condition,
             "price": price_str,
             "link": f"https://store.bricklink.com/luke.donohoe#/shop?o={{\"q\":\"{item['inventory_id']}\",\"sort\":0,\"pgSize\":100,\"showHomeItems\":0}}",
-            "image_link": f"https://www.bricklink.com/PL/{part_no}.jpg",  # Placeholder, replaced later
+            "image_link": "https://via.placeholder.com/150",  # Replaced via scraping
             "brand": "Lego",
             "google_product_category": "3287",
             "fb_product_category": "47",
-            "color": color,
+            "color": "PLACEHOLDER",  # Replaced via scraping
             "quantity_to_sell_on_facebook": quantity
         })
 
